@@ -140,8 +140,8 @@ class SourceGenerator:
             obj_files = ' '.join(dependencies.keys())
 
             string = (f'OBJS={obj_files}\n'
-                      f'CFLAGS=-O0\n'
-                      f'#CFLAGS=-O0 -fcf-protection=none\n'
+                      f'CFLAGS=-O2\n'
+                      f'#CFLAGS=-O2 -fcf-protection=none\n'
                       f'LDFLAGS=\n'
                       f'CC=gcc\n\n')
 
