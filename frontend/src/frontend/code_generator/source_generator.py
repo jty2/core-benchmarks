@@ -138,12 +138,21 @@ class SourceGenerator:
             dependencies = self.get_object_files_to_c_files_mapping(
                 function_files)
             obj_files = ' '.join(dependencies.keys())
-            string = (f'{self.benchmark_name}: {obj_files}\n'
-                      f'\tgcc -o {self.benchmark_name} {obj_files} -O0\n\n')
+
+            string = (f'OBJS={obj_files}\n'
+                      f'CFLAGS=-O0\n'
+                      f'#CFLAGS=-O0 -fcf-protection=none\n'
+                      f'LDFLAGS=\n'
+                      f'CC=gcc\n\n')
+
+            string += (f'{self.benchmark_name}: $(OBJS)\n'
+                      f'\t$(CC) -o $@ $^ $(LDFLAGS)\n\n')
+
             for obj_file, c_file in dependencies.items():
                 string += f'{obj_file}: {c_file}\n'
-                string += f'\tgcc -c -o {obj_file} {c_file} -O0\n\n'
-            string += f'clean:\n\trm *.o {self.benchmark_name}\n'
+                string += f'\t$(CC) -c -o $@ $^ $(CFLAGS)\n\n'
+
+            string += f'\nclean:\n\trm -f $(OBJS) {self.benchmark_name}\n'
             f.write(string)
 
     def get_object_files_to_c_files_mapping(
