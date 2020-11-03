@@ -23,7 +23,7 @@ def main():
     ichase_gen.register_args(subparsers)
     dfs_chase_gen.register_args(subparsers)
     parser.add_argument('output_filename',
-                        default='/tmp/cfg.pbtxt',
+                        default='/tmp/cfg.pbtext',
                         help='Output textproto file location.')
     args = parser.parse_args()
 
@@ -34,7 +34,7 @@ def main():
     else:
         raise ValueError('Invalid CFG type: %s' % args.cfg_type)
 
-    if args.output_filename.endswith('.pbtxt'):
+    if args.output_filename.endswith('.pbtext'):
         with open(args.output_filename, 'w') as f:
             f.write(str(cfg))
     elif args.output_filename.endswith('.pb'):
