@@ -135,7 +135,8 @@ class Callgraph:
 
     def format_function(self, function_name: int) -> str:
         function = self.get_function(function_name)
-        result = function.get_signature_header() + '() {\n'
+        result = function.get_signature_header() + '() __attribute__((noinline));\n'
+        result += function.get_signature_header() + '() {\n'
         code_block_texts = [
             self.format_code_block_with_label(code_block)
             for code_block in function.code_blocks
