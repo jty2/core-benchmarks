@@ -62,10 +62,10 @@ class DFSChaseGenerator(common.BaseGenerator):
         self._left_path_probability: float = left_path_probability
         self._use_indirect_calls: bool = use_indirect_calls
         self._function_body: cfg_pb2.CodeBlockBody = self._add_code_block_body(
-            'int x = 1;\n'
-            'int y = x*x + 3;\n'
-            'int z = y*x + 12345;\n'
-            'int w = z*z + x - y;\n')
+            'int x = 1; asm volatile ("" : : "r" (x));\n'
+            'int y = x*x + 3; asm volatile ("" : : "r" (y));\n'
+            'int z = y*x + 12345; asm volatile ("" : : "r" (z));\n'
+            'int w = z*z + x - y; asm volatile ("" : : "r"(w));\n')
 
     def _add_code_block_with_branch(
             self,
