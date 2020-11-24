@@ -140,17 +140,25 @@ class SourceGenerator:
             prefetch_ifdef = ('ifdef ENABLE_PREFETCH\n'
                               '\tDENABLE_PREFETCH = -DENABLE_CODE_PREFETCH\n'
                               'endif\n\n')
-            cflags = ['$(DENABLE_PREFETCH)', '-O2']
+            cc_str = ' '.join(['CC','=','gcc','\n'])
+            ld_str = ' '.join(['LD','=','gcc','\n'])
+            ldflags = ['LDFLAGS','=','-fuse-ld=gold','\n']
+            ldflags_str = ' '.join(ldflags)
+            cflags = ['CFLAGS','=','$(DENABLE_PREFETCH)', '-O2', '\n']
             cflags_str = ' '.join(cflags)
             obj_files = ' '.join(dependencies.keys())
             string = (
                 f'{prefetch_ifdef}'
+                f'{cc_str}'
+                f'{ld_str}'
+                f'{cflags_str}'
+                f'{ldflags_str}'
                 f'{self.benchmark_name}: {obj_files}\n'
-                f'\tgcc -o {self.benchmark_name} {obj_files} {cflags_str}\n\n')
+                f'\t$(LD) -o $@ $^ $(LDFLAGS)\n\n')
             for obj_file, c_file in dependencies.items():
                 string += f'{obj_file}: {c_file}\n'
-                string += f'\tgcc -c -o {obj_file} {c_file} {cflags_str}\n\n'
-            string += f'clean:\n\trm *.o {self.benchmark_name}\n'
+                string += f'\t$(CC) -c -o $@ $< $(CFLAGS)\n\n'
+            string += f'clean:\n\trm -f *.o {self.benchmark_name}\n'
             f.write(string)
 
     def get_object_files_to_c_files_mapping(
