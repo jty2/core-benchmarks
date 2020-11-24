@@ -97,6 +97,13 @@ class Callgraph:
                   '#ifdef __aarch64__\n'
                   f'{prefetch_string}'
                   '#endif\n'
+                  '#else\n'
+                  '#ifdef __aarch64__\n'
+                  # let compiler emit address generating instructions + nop = 3 inst.
+                  # f'__asm__ __volatile__ ("nop\\n" :: "r" (&{target_symbol}));\n'
+                  # 3x nop
+                  # f'__asm__ __volatile__ ("nop; nop; nop;\\n");\n'
+                  '#endif\n'
                   '#endif\n')
         return result
 
@@ -107,7 +114,7 @@ class Callgraph:
             offset = i * blocks.CACHELINE_SIZE
             prefetch.append(f'"PRFM PLIL1KEEP, [%0, #{offset}]\\n\\t"\n')
         prefetch_str = ''.join(prefetch)
-        result = ('asm (\n' f'{prefetch_str}' f'::"r"(&{target_symbol}): );\n')
+        result = ('__asm__ __volatile__ (\n' f'{prefetch_str}' f'::"r"(&{target_symbol}): );\n')
         return result
 
     def function_call_signature_for(self, function_name: int) -> str:
