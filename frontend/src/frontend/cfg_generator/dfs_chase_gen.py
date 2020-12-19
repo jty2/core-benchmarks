@@ -29,8 +29,8 @@ def register_args(parser):
                            type=float,
                            help='Branch taken probability.')
     subparser.add_argument('--insert_code_prefetches',
-                           default=False,
-                           action='store_true',
+                           default=0,
+                           type=int,
                            help='Insert code prefetches into the '
                            'callchains. Not available on all platforms.')
 
@@ -40,7 +40,7 @@ class DFSChaseGenerator(common.BaseGenerator):
 
     def __init__(self, depth: int, use_indirect_calls: bool,
                  left_path_probability: float,
-                 insert_code_prefetches: bool) -> None:
+                 insert_code_prefetches: int) -> None:
         """Constructs a DFS pointer chase generator.
 
         Args:
@@ -48,6 +48,7 @@ class DFSChaseGenerator(common.BaseGenerator):
             use_indirect_calls: Use indirect calls to traverse the tree. If
                 false, the CFG will create conditional branches + direct calls.
             left_path_probability: The probability of taking the left path.
+            insert_code_prefetches: Number of cache lines to prefetch for each target
         """
         super().__init__()
 
@@ -58,7 +59,7 @@ class DFSChaseGenerator(common.BaseGenerator):
         self._leaf_functions: List[int] = []
         # ID of the function at the root of the function tree.
         self._root_func: int = 0
-        self._insert_code_prefetches: bool = insert_code_prefetches
+        self._insert_code_prefetches: int = insert_code_prefetches
         self._left_path_probability: float = left_path_probability
         self._use_indirect_calls: bool = use_indirect_calls
 
@@ -140,9 +141,9 @@ class DFSChaseGenerator(common.BaseGenerator):
         # knowing the control flow for sure.
         if self._insert_code_prefetches:
             code_blocks.append(
-                self._add_code_prefetch_code_block(function_id=call_targets[0]))
+                self._add_code_prefetch_code_block(function_id=call_targets[0], degree=self._insert_code_prefetches))
             code_blocks.append(
-                self._add_code_prefetch_code_block(function_id=call_targets[1]))
+                self._add_code_prefetch_code_block(function_id=call_targets[1], degree=self._insert_code_prefetches))
 
         # Conditional branch taken path.
         taken_block = self._add_code_block_with_branch(

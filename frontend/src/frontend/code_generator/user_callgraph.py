@@ -93,9 +93,15 @@ class Callgraph:
                 self.code_blocks[code_prefetch.target_name])
         prefetch_string = self._create_prefetch_aarch64_string(
             code_prefetch.degree, target_symbol)
+        nop_prefetch_string = self._create_nop_aarch64_string(
+            code_prefetch.degree, target_symbol)
         result = ('#ifdef ENABLE_CODE_PREFETCH\n'
                   '#ifdef __aarch64__\n'
                   f'{prefetch_string}'
+                  '#endif\n'
+                  '#else\n'
+                  '#ifdef __aarch64__\n'
+                  f'{nop_prefetch_string}\n'
                   '#endif\n'
                   '#endif\n')
         return result
@@ -107,7 +113,14 @@ class Callgraph:
             offset = i * blocks.CACHELINE_SIZE
             prefetch.append(f'"PRFM PLIL1KEEP, [%0, #{offset}]\\n\\t"\n')
         prefetch_str = ''.join(prefetch)
-        result = ('asm (\n' f'{prefetch_str}' f'::"r"(&{target_symbol}): );\n')
+        result = ('__asm__ __volatile__ (\n' f'{prefetch_str}' f'::"r"(&{target_symbol}): );\n')
+        return result
+
+    def _create_nop_aarch64_string(self, degree: int,
+                                        target_symbol: str) -> str:
+        nop_str = '"NOP\\n\\t"\n' * degree
+        # referring to target sysmbol will have compiler load address
+        result = ('__asm__ __volatile__ (\n' f'{nop_str}' f'::"r"(&{target_symbol}): );\n')
         return result
 
     def function_call_signature_for(self, function_name: int) -> str:
