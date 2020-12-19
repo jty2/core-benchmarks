@@ -31,8 +31,8 @@ def pop_random_element(somelist: List[Any]) -> Any:
 # The body of every function that we will generate. It simply performs a
 # sequence of arithmetic operations. We write it in assembly to have better
 # control over what the compiler does to it.
-FUNCTION_BODY_XARCH: str = (
-            'int x=1, y=0, z=0, w=0, tmp=0;\n'
+
+FUNCTION_BODY_XARCH_LOOP_STR: str = (
             'for (int i = 0; i < ITERS; i++) {\n'
             '#ifdef __aarch64__\n'
             '  asm volatile (\n'
@@ -70,13 +70,20 @@ FUNCTION_BODY_XARCH: str = (
 class BaseGenerator(object):
     """Common functionality for generating benchmarks."""
 
-    def __init__(self) -> None:
+    def __init__(self, function_body_loops=None) -> None:
         # Map from code block body ID to the CodeBlockBody proto.
         self._code_block_bodies: Dict[int, cfg_pb2.CodeBlockBody] = {}
         # Map from code block ID to the CodeBlock proto.
         self._code_blocks: Dict[int, cfg_pb2.CodeBlock] = {}
         # Map from function ID to the function proto.
         self._functions: Dict[int, cfg_pb2.Function] = {}
+
+        if function_body_loops is None:
+            function_body_loops = 0
+
+        FUNCTION_BODY_XARCH = 'int x=1, y=0, z=0, w=0, tmp=0;\n' + \
+            FUNCTION_BODY_XARCH_LOOP_STR * function_body_loops
+
         self._function_body: cfg_pb2.CodeBlockBody = self._add_code_block_body(
             FUNCTION_BODY_XARCH)
 

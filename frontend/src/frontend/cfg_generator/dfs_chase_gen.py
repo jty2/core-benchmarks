@@ -33,6 +33,11 @@ def register_args(parser):
                            type=int,
                            help='Insert code prefetches into the '
                            'callchains. Not available on all platforms.')
+    subparser.add_argument('--function_body_loops',
+                           default=0,
+                           type=int,
+                           help='Number of function body loops for increasing '
+                           'dynamic instruction count per function')
 
 
 class DFSChaseGenerator(common.BaseGenerator):
@@ -40,6 +45,7 @@ class DFSChaseGenerator(common.BaseGenerator):
 
     def __init__(self, depth: int, use_indirect_calls: bool,
                  left_path_probability: float,
+                 function_body_loops: int,
                  insert_code_prefetches: int) -> None:
         """Constructs a DFS pointer chase generator.
 
@@ -48,9 +54,10 @@ class DFSChaseGenerator(common.BaseGenerator):
             use_indirect_calls: Use indirect calls to traverse the tree. If
                 false, the CFG will create conditional branches + direct calls.
             left_path_probability: The probability of taking the left path.
+            function_body_loops: Number of copies of function body loops
             insert_code_prefetches: Number of cache lines to prefetch for each target
         """
-        super().__init__()
+        super().__init__(function_body_loops=function_body_loops)
 
         self._depth: int = depth
         # Map from function id to its left/right callee.
@@ -59,8 +66,8 @@ class DFSChaseGenerator(common.BaseGenerator):
         self._leaf_functions: List[int] = []
         # ID of the function at the root of the function tree.
         self._root_func: int = 0
-        self._insert_code_prefetches: int = insert_code_prefetches
         self._left_path_probability: float = left_path_probability
+        self._insert_code_prefetches: int = insert_code_prefetches
         self._use_indirect_calls: bool = use_indirect_calls
 
     def _add_code_block_with_branch(
@@ -222,5 +229,6 @@ def generate_cfg(args):
     print('Generating DFS instruction pointer chase benchmark...')
     generator = DFSChaseGenerator(args.depth, args.use_indirect_calls,
                                   args.branch_probability,
+                                  args.function_body_loops,
                                   args.insert_code_prefetches)
     return generator.generate_cfg()
