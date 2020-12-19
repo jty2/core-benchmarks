@@ -33,7 +33,7 @@ def pop_random_element(somelist: List[Any]) -> Any:
 # control over what the compiler does to it.
 FUNCTION_BODY_XARCH: str = (
             'int x=1, y=0, z=0, w=0, tmp=0;\n'
-            'for (int i = 0; i < 20; i++) {\n'
+            'for (int i = 0; i < ITERS; i++) {\n'
             '#ifdef __aarch64__\n'
             '  asm volatile (\n'
             '      "mul %0, %0, %0\\n\\t"\n'
