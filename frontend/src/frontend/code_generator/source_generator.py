@@ -142,7 +142,12 @@ class SourceGenerator:
                             'endif\n\n')
             prefetch_ifdef = ('ifdef ENABLE_PREFETCH\n'
                               '\tDENABLE_PREFETCH = -DENABLE_CODE_PREFETCH\n'
+                              '\tPREFETCH_TAG = .prefetch\n'
                               'endif\n\n')
+
+            # for mapping text section using libhugetlbfs
+            ldflags = '-B /usr/local/share/libhugetlbfs -Wl,--hugetlbfs-align -no-pie -Wl,--no-as-needed\n'
+
             cflags = ['$(DENABLE_PREFETCH)', '-O2',
                       '-fno-optimize-sibling-calls', '-DITERS=$(ITERS)']
             cflags_str = ' '.join(cflags)
@@ -150,19 +155,28 @@ class SourceGenerator:
             string = (
                 f'{iters_ifndef}'
                 f'{prefetch_ifdef}'
-                f'{self.benchmark_name}: {obj_files}\n'
-                f'\tgcc -o {self.benchmark_name} {obj_files} {cflags_str}\n\n')
-            for obj_file, c_file in dependencies.items():
-                string += f'{obj_file}: {c_file}\n'
-                string += f'\tgcc -c -o {obj_file} {c_file} {cflags_str}\n\n'
-            string += f'clean:\n\trm *.o {self.benchmark_name}\n'
+                f'CC = gcc\n'
+                f'LD = gcc\n\n'
+                f'CFLAGS = {cflags_str}\n\n'
+                f'ifdef HUGETTEXT\n'
+                f'LDFLAGS = {ldflags}\n'
+                f'endif\n\n'
+                f'EXE = benchmark.iters$(ITERS)$(PREFETCH_TAG)\n'
+                f'OBJ = {obj_files}\n\n'
+                f'$(EXE): $(OBJ)\n'
+                f'\t$(LD) -o $@ $^ $(LDFLAGS)\n\n'
+                f'%.o %.$(ITERS)$(PREFETCH_TAG).o: %.c\n'
+                f'\t$(CC) -c -o $@ $< $(CFLAGS)\n\n'
+                )
+
+            string += f'clean:\n\trm -f $(OBJ) $(EXE)\n'
             f.write(string)
 
     def get_object_files_to_c_files_mapping(
             self, c_files: Collection[str]) -> Dict[str, str]:
         result = {}
         for func_file in c_files:
-            obj_file = re.sub(r'\.c', r'.o', func_file)
+            obj_file = re.sub(r'\.c', r'.$(ITERS)$(PREFETCH_TAG).o', func_file)
             result[obj_file] = func_file
         result['main.o'] = 'main.c'
         return result
