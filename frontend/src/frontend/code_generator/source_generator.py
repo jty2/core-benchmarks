@@ -149,7 +149,7 @@ class SourceGenerator:
             ldflags = '-B /usr/local/share/libhugetlbfs -Wl,--hugetlbfs-align -no-pie -Wl,--no-as-needed\n'
 
             cflags = ['$(DENABLE_PREFETCH)', '-O2',
-                      '-fno-optimize-sibling-calls', '-DITERS=$(ITERS)']
+                      '-fno-optimize-sibling-calls', '-fno-tree-loop-optimize', '-fno-align-loops', '-DITERS=$(ITERS)']
             cflags_str = ' '.join(cflags)
             obj_files = ' '.join(dependencies.keys())
             string = (
