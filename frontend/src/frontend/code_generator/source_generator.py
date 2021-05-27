@@ -160,12 +160,13 @@ class SourceGenerator:
                 f'CFLAGS = {cflags_str}\n\n'
                 f'ifdef HUGETTEXT\n'
                 f'LDFLAGS = {ldflags}\n'
+                f'HUGETTEXT_TAG = .hugetext\n'
                 f'endif\n\n'
-                f'EXE = benchmark.iters$(ITERS)$(PREFETCH_TAG)\n'
+                f'EXE = benchmark.iters$(ITERS)$(PREFETCH_TAG)$(HUGETTEXT_TAG)\n'
                 f'OBJ = {obj_files}\n\n'
                 f'$(EXE): $(OBJ)\n'
                 f'\t$(LD) -o $@ $^ $(LDFLAGS)\n\n'
-                f'%.o %.$(ITERS)$(PREFETCH_TAG).o: %.c\n'
+                f'%.o %.$(ITERS)$(PREFETCH_TAG)$(HUGETTEXT_TAG).o: %.c\n'
                 f'\t$(CC) -c -o $@ $< $(CFLAGS)\n\n'
                 )
 
@@ -176,7 +177,7 @@ class SourceGenerator:
             self, c_files: Collection[str]) -> Dict[str, str]:
         result = {}
         for func_file in c_files:
-            obj_file = re.sub(r'\.c', r'.$(ITERS)$(PREFETCH_TAG).o', func_file)
+            obj_file = re.sub(r'\.c', r'.$(ITERS)$(PREFETCH_TAG)$(HUGETTEXT_TAG).o', func_file)
             result[obj_file] = func_file
         result['main.o'] = 'main.c'
         return result
